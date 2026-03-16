@@ -56,7 +56,7 @@ Save. The modified behavior will be applied immediately.
 
 Done. Have Fun :)
 
-Video for Instructions: https://youtu.be/_JLjrbEKr80
+Video for Instructions: https://youtu.be/5OI7sSmfvco
 
 License
 
