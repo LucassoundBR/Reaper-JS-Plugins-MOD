@@ -1,4 +1,4 @@
-#Reaper JS Plugins – MOD
+# Reaper JS Plugins – MOD
 
 Custom modifications of JKK Visualizer and BirdBird Global Sampler for REAPER.
 
@@ -58,6 +58,6 @@ Done. Have Fun :)
 
 Video for Instructions: https://youtu.be/5OI7sSmfvco
 
-License
+# License
 
 Please respect the licenses and credit the original authors when redistributing or modifying these scripts.
