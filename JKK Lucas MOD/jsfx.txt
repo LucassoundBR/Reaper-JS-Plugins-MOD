@@ -36,6 +36,12 @@ slider5:0.25<0,1,0.001>Spectrum Floor (Macro %)
     );
     // --------------------------------------------
 
+    last_slider1 = slider1;
+    last_slider2 = slider2;
+    last_slider3 = slider3;
+    last_slider4 = slider4;
+    last_slider5 = slider5;
+
     last_m_visual = -144; 
     last_s_visual = -144;
     m_peak_hold = -144;
@@ -100,21 +106,21 @@ slider5:0.25<0,1,0.001>Spectrum Floor (Macro %)
     last_sr = srate;
 
 @slider
-    gmem[2] = slider1; // Gonio
-    gmem[6] = slider3; // Scope
-    gmem[7] = slider2; // Symbiote
-    gmem[8] = slider4; // Spectrum
-    gmem[3] = slider5; // Floor
+    slider1 != last_slider1 ? ( gmem[2] = slider1; last_slider1 = slider1; ); // Gonio
+    slider3 != last_slider3 ? ( gmem[6] = slider3; last_slider3 = slider3; ); // Scope
+    slider2 != last_slider2 ? ( gmem[7] = slider2; last_slider2 = slider2; ); // Symbiote
+    slider4 != last_slider4 ? ( gmem[8] = slider4; last_slider4 = slider4; ); // Spectrum
+    slider5 != last_slider5 ? ( gmem[3] = slider5; last_slider5 = slider5; ); // Floor
 
 @block
     gmem[1] = srate;
 
-    // UI 슬라이더 오토메이션 강제 동기화
-    abs(gmem[2] - slider1) > 0.00001 ? ( slider1 = gmem[2]; slider_automate(slider1); );
-    abs(gmem[7] - slider2) > 0.00001 ? ( slider2 = gmem[7]; slider_automate(slider2); );
-    abs(gmem[6] - slider3) > 0.00001 ? ( slider3 = gmem[6]; slider_automate(slider3); );
-    abs(gmem[8] - slider4) > 0.00001 ? ( slider4 = gmem[8]; slider_automate(slider4); );
-    abs(gmem[3] - slider5) > 0.00001 ? ( slider5 = gmem[3]; slider_automate(slider5); );
+    // UI 슬라이더 오토메이션 강제 동기화 (단방향 방어)
+    abs(gmem[2] - slider1) > 0.00001 ? ( slider1 = gmem[2]; last_slider1 = slider1; slider_automate(slider1); );
+    abs(gmem[7] - slider2) > 0.00001 ? ( slider2 = gmem[7]; last_slider2 = slider2; slider_automate(slider2); );
+    abs(gmem[6] - slider3) > 0.00001 ? ( slider3 = gmem[6]; last_slider3 = slider3; slider_automate(slider3); );
+    abs(gmem[8] - slider4) > 0.00001 ? ( slider4 = gmem[8]; last_slider4 = slider4; slider_automate(slider4); );
+    abs(gmem[3] - slider5) > 0.00001 ? ( slider5 = gmem[3]; last_slider5 = slider5; slider_automate(slider5); );
     
     // [리셋 체크] Lua에서 30번지에 1을 쓰면 리셋
     gmem[30] > 0 ? (

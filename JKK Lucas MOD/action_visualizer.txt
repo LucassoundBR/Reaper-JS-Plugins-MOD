@@ -16,7 +16,7 @@ gfx.init("JKK_Visualizer", win_w, win_h, saved_dock)
 local g_gain_min, g_gain_max            = 0.0,  2.0
 local s_zoom_min, s_zoom_max            = 0.0,  2.5
 local spec_ceil_min, spec_ceil_max      = 100,  20
-local spec_floor_min, spec_floor_max    = -45, -45
+local spec_floor_min, spec_floor_max    = -90, -20
 local spec_offset = 0
 local g_signal_attack = 0.00001
 local g_signal_release = 0.00001
@@ -100,7 +100,7 @@ end
     local scp1_r, scp1_g, scp1_b, scp1_a = 006/255, 143/255, 195/255, 0.1
     local scp2_r, scp2_g, scp2_b, scp2_a = 006/255, 143/255, 195/255, 0.8
     local scp3_r, scp3_g, scp3_b, scp3_a = 227/255, 219/255, 142/255, 1.0
-    local scope_speed = 0.1 -- [UPDATED] Slower by 3x (was 0.1)
+    local scope_speed = 0.032 -- Optimized for viewing 60Hz signals
 
     -- Spectrum Color
     local sptr1_r, sptr1_g, sptr1_b, sptr1_a = 006/255, 143/255, 195/255, 0.1
@@ -503,9 +503,6 @@ end
             local step = (buf_len / draw_w) * scope_speed 
             local is_hover = (gfx.mouse_x >= x and gfx.mouse_x <= x + w and 
                           gfx.mouse_y >= y and gfx.mouse_y <= y + h)
-            if is_hover then
-                step = (buf_len / draw_w) * (0.3)
-            end
             
             local scan_stride = math.max(1, math.floor(step / 8)) 
     
@@ -816,14 +813,13 @@ end
         local srate = reaper.gmem_read(1)
         if srate <= 0 then srate = 48000 end
         local min_hz = 50
-        local min_bin = min_hz * fft_size / srate
+        local hz_per_bin = srate / fft_size
+        local min_bin = min_hz / hz_per_bin
         local num_bins = fft_size / 2
         local bin_range = num_bins - min_bin
 
-        local val_threshold = 1.0
-        local val_gain = 0.25
-        local thresh_db = -100 + (val_threshold * 80)
-        local gain_boost = val_gain * 60
+        local thresh_db = floor_db
+        local boost_db = (gain - 0.5) * 60.0
 
         if not is_frozen then
             local col_data = {}
@@ -843,7 +839,14 @@ end
                 
                 local raw = interpolate_cubic(p0, p1, p2, p3, t)
                 if raw < 1e-10 then raw = 1e-10 end
-                col_data[y_px] = 20 * math.log(raw, 10)
+                
+                local hz = idx_float * hz_per_bin
+                local tilt_db = 0
+                if hz > 100 then
+                    tilt_db = 3.5 * math.log(hz / 100, 2)
+                end
+                
+                col_data[y_px] = (20 * math.log(raw, 10)) + tilt_db + boost_db
             end
 
             if w_last_col_data[0] == nil then 
@@ -864,7 +867,7 @@ end
                     local interp_db = prev_db * (1 - horiz_t) + col_data[y_px] * horiz_t
                     
                     if interp_db >= thresh_db then
-                        local effective_db = (interp_db - thresh_db) + gain_boost
+                        local effective_db = (interp_db - thresh_db)
                         local intensity = effective_db / 60.0
                         if intensity > 0.05 then
                             if intensity > 1 then intensity = 1 end
