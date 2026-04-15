@@ -1,4 +1,4 @@
-desc: JKK_Visualizer
+desc: JKK_Visualizer (Lucas MOD)
 
 options:no_meter
 options:gmem=JKK_Visualizer_Mem
@@ -94,7 +94,8 @@ slider5:0.25<0,1,0.001>Spectrum Floor (Macro %)
     i_win_len2 = 1 / (s_win_cnt * win_len); // S용 정규화 계수
     
     // FFT Overlap을 위한 변수 세팅
-    hop_size = 1024;  // 1024면 75% 겹침(4배 빠름). 512면 87.5% 겹침(8배 빠름)
+    hop_size = (21.33 * srate / 1000)|0;  // 21.33ms (approx 1024 samples at 48kHz). Ensures consistent update rate.
+    hop_size = min(hop_size, fft_size);
     hop_cnt = 0;
     audio_buf = 900000; // 최근 4096개 원본 오디오를 뺑뺑이로 담아둘 새 원형 버퍼 번지
     audio_idx = 0;
@@ -163,6 +164,9 @@ slider5:0.25<0,1,0.001>Spectrum Floor (Macro %)
         target_freq = 24000;
         max_bin = floor(target_freq * fft_size / srate);
         max_bin > (fft_size / 2) ? max_bin = fft_size / 2;
+
+        hop_size = (21.33 * srate / 1000)|0;
+        hop_size = min(hop_size, fft_size);
         
         last_sr = srate;
     );

@@ -1,8 +1,8 @@
 --========================================================
--- @title JKK_Visualizer Editor
--- @description JKK_Visualizer Editor
--- @author Junki Kim
--- @version 1.2.0
+-- @title JKK_Visualizer Editor (Lucas MOD)
+-- @description JKK_Visualizer Editor (Lucas MOD)
+-- @author Junki Kim (Mod by Lucas)
+-- @version 1.2.0 (MOD)
 -- @provides
 --     [nomain] JKK_Theme.lua
 --     [nomain] LOGO.png

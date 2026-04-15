@@ -1,9 +1,9 @@
 --========================================================
--- @title JKK_Visualizer
--- @description JKK_Visualizer
--- @author Junki Kim
--- @version 1.0.8
--- @provides 
+-- @title JKK_Visualizer (Lucas MOD)
+-- @description JKK_Visualizer (Lucas MOD)
+-- @author Junki Kim (Mod by Lucas)
+-- @version 1.0.8 (MOD)
+-- @provides
 --     [effect] JKK_Visualizer.jsfx
 --========================================================
 options = reaper.gmem_attach('JKK_Visualizer_Mem') 
@@ -198,7 +198,9 @@ end
     end
 
     function draw_gonio(x, y, w, h, gain)
-        local base_trail = 2000
+        local srate = reaper.gmem_read(1)
+        if srate <= 0 then srate = 44100 end
+        local base_trail = 2000 * (srate / 44100)
         local trail_len = math.floor(base_trail / (g_signal_release / 2))
         local is_hover = (gfx.mouse_x >= x and gfx.mouse_x <= x + w and
                       gfx.mouse_y >= y and gfx.mouse_y <= y + h)
@@ -502,7 +504,11 @@ end
                 end
             end
     
-            local step = (buf_len / draw_w) * scope_speed 
+            local srate = reaper.gmem_read(1)
+            if srate <= 0 then srate = 44100 end
+            local scope_speed_scaled = scope_speed * (srate / 44100)
+            local step = (buf_len / draw_w) * scope_speed_scaled 
+
             local is_hover = (gfx.mouse_x >= x and gfx.mouse_x <= x + w and 
                           gfx.mouse_y >= y and gfx.mouse_y <= y + h)
             
