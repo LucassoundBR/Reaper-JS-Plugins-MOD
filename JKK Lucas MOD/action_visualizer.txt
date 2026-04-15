@@ -797,15 +797,37 @@ end
 
         -- Recreate canvas when height changes (keeps width fixed for history)
         if canvas_h ~= w_canvas_h then
+            local old_h = w_canvas_h
+            local temp_canvas_id = 2  -- second offscreen buffer
+
+            if old_h > 0 then
+                -- 1. Copy old canvas to temp buffer
+                gfx.dest = temp_canvas_id
+                gfx.setimgdim(temp_canvas_id, SPEC_RES_W, old_h)
+                gfx.blit(waterfall_canvas_id, 1, 0,
+                    0, 0, SPEC_RES_W, old_h,
+                    0, 0, SPEC_RES_W, old_h)
+            end
+
+            -- 2. Resize main canvas & clear
             gfx.dest = waterfall_canvas_id
             gfx.setimgdim(waterfall_canvas_id, -1, -1)
             gfx.setimgdim(waterfall_canvas_id, SPEC_RES_W, canvas_h)
             gfx.set(bg_r, bg_g, bg_b, 1)
             gfx.rect(0, 0, SPEC_RES_W, canvas_h, 1)
+
+            if old_h > 0 then
+                -- 3. Blit old data back, stretched to new height
+                gfx.set(1, 1, 1, 1)
+                gfx.blit(temp_canvas_id, 1, 0,
+                    0, 0, SPEC_RES_W, old_h,
+                    0, 0, SPEC_RES_W, canvas_h)
+                -- 4. Free temp buffer
+                gfx.setimgdim(temp_canvas_id, -1, -1)
+            end
+
             gfx.dest = -1
             w_canvas_h = canvas_h
-            w_cursor_idx = 0
-            w_last_col_data = {}
         end
 
         local scale_exponent = 3.0
@@ -819,7 +841,13 @@ end
         local bin_range = num_bins - min_bin
 
         local thresh_db = -45
-        local boost_db = gain * 40.0
+        local boost_db = (gain - 0.7) * 40.0
+
+        -- Calculate effective speed (slow down on hover)
+        local effective_speed = w_scan_speed
+        if is_hover and not is_frozen then
+            effective_speed = math.max(1, math.floor(w_scan_speed / 4))
+        end
 
         if not is_frozen then
             -- Sample frequency data into canvas_h rows (1:1 with screen pixels)
@@ -856,7 +884,7 @@ end
 
             -- Draw columns to the fixed-width canvas (1px per column, 1px per row)
             gfx.dest = waterfall_canvas_id
-            for s = 0, w_scan_speed - 1 do
+            for s = 0, effective_speed - 1 do
                 local current_idx = (w_cursor_idx + s) % SPEC_RES_W
                 local horiz_t = s / w_scan_speed
 
@@ -903,7 +931,7 @@ end
         gfx.dest = -1
         gfx.set(1, 1, 1, 1)
 
-        local advance = is_frozen and 0 or w_scan_speed
+        local advance = is_frozen and 0 or effective_speed
         local split_x = (w_cursor_idx + advance) % SPEC_RES_W
 
         -- Right portion (older data) → left side of module
@@ -979,7 +1007,7 @@ end
             gfx.x, gfx.y = x + w - fw - 5, y + 5
             gfx.drawstr("FREEZE")
         else
-            w_cursor_idx = (w_cursor_idx + w_scan_speed) % SPEC_RES_W
+            w_cursor_idx = (w_cursor_idx + effective_speed) % SPEC_RES_W
         end
     end
 
@@ -1047,7 +1075,7 @@ end
             reaper.gmem_write(6, 0.5) 
             reaper.gmem_write(7, 0.5) 
             reaper.gmem_write(8, 0.5) 
-            reaper.gmem_write(9, 0.5) -- Waterfall Default
+            reaper.gmem_write(9, 0.7) -- Waterfall Default
             reaper.gmem_write(1300, 1.0) 
             reaper.gmem_write(4, 1.0) 
             reaper.gmem_write(5, 1.0)
@@ -1277,7 +1305,7 @@ end
                 elseif mod_id == 3 then target_gmem = 6 
                 elseif mod_id == 4 then target_gmem = 7 
                 elseif mod_id == 5 then target_gmem = 8 
-                elseif mod_id == 6 then target_gmem = 6  -- Linked to Symbiote
+                elseif mod_id == 6 then target_gmem = 9  -- Spectrogram (independent)
                 end
 
                 if target_gmem then
@@ -1296,7 +1324,7 @@ end
             elseif mod_id == 3 then mod_raw_gain = reaper.gmem_read(6)
             elseif mod_id == 4 then mod_raw_gain = reaper.gmem_read(7)
             elseif mod_id == 5 then mod_raw_gain = reaper.gmem_read(8)
-            elseif mod_id == 6 then mod_raw_gain = reaper.gmem_read(6) -- Linked to Symbiote
+            elseif mod_id == 6 then mod_raw_gain = reaper.gmem_read(9) -- Spectrogram (independent)
             end
 
             local specific_gain = g_gain_min + (g_gain_max - g_gain_min) * mod_raw_gain
@@ -1359,8 +1387,9 @@ end
                 SaveWidths()
             end
         elseif hover_sep_idx then
-            gfx.set(text_r, text_g, text_b, 0.5)
-            gfx.line(separators[hover_sep_idx].x, 0, separators[hover_sep_idx].x, gfx.h)
+            local sx = separators[hover_sep_idx].x
+            gfx.set(text_r * 0.5 + 0.5, text_g * 0.5 + 0.5, text_b * 0.5 + 0.5, 1.0)
+            gfx.rect(sx - 2, 0, 5, gfx.h, 1)
         end
         
         last_left_click = left_click

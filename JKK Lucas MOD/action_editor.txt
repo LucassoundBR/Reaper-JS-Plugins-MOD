@@ -25,6 +25,7 @@ local ApplyTheme = (reaper.file_exists(theme_path) and dofile(theme_path).ApplyT
     local MEM_GAIN_SYMBIOTE = 6
     local MEM_GAIN_SCOPE    = 7
     local MEM_GAIN_SPECTRUM = 8
+    local MEM_GAIN_SPECTROGRAM = 9
     local MEM_BG    = 1000
     local MEM_LINE  = 1010
     local MEM_TEXT  = 1020
@@ -45,6 +46,7 @@ local ApplyTheme = (reaper.file_exists(theme_path) and dofile(theme_path).ApplyT
         ["GAIN_SYMBIOTE"] = { "Symbiote Gain", "Adjusts the visual sensitivity of the Symbiote.\nSymbiote 모듈의 반응 감도를 조절합니다." },
         ["GAIN_SCOPE"]    = { "Scope Gain",    "Adjusts the visual sensitivity of the Scope.\nScope 모듈의 반응 감도를 조절합니다." },
         ["GAIN_SPECTRUM"] = { "Spectrum Gain", "Adjusts the visual sensitivity of the Spectrum.\nSpectrum 모듈의 반응 감도를 조절합니다." },
+        ["GAIN_SPECTROGRAM"] = { "Spectrogram Gain", "Adjusts the visual sensitivity of the Spectrogram.\nSpectrogram 모듈의 반응 감도를 조절합니다." },
         ["FONT"]    = { "Font Scale",       "Adjusts the size of all text at the same ratio.\n모든 텍스트의 크기를 동일한 비율로 조절합니다." },
         ["ATTACK"]  = { "Response Speed (Attack)", "Adjusts how quickly the visualizer reacts to signals.\n비주얼라이저가 신호에 반응하는 속도를 조절합니다." },
         ["RELEASE"] = { "Decay Speed (Release)", "Adjusts how quickly the visualizer fades out.\n비주얼라이저의 잔상이 사라지는 속도를 조절합니다." },
@@ -371,6 +373,13 @@ local ApplyTheme = (reaper.file_exists(theme_path) and dofile(theme_path).ApplyT
                 if sp_changed then reaper.gmem_write(MEM_GAIN_SPECTRUM, sp_new) end
                 if reaper.ImGui_IsItemDeactivatedAfterEdit(ctx) then SaveAllSettings() end
                 if reaper.ImGui_IsItemHovered(ctx) then shared_info.hovered_id = "GAIN_SPECTRUM" end
+
+                -- 5. Spectrogram Gain
+                local wf_gain = reaper.gmem_read(MEM_GAIN_SPECTROGRAM)
+                local wf_changed, wf_new = reaper.ImGui_SliderDouble(ctx, "Spectrogram Gain", wf_gain, 0.0, 1.0, "%.3f")
+                if wf_changed then reaper.gmem_write(MEM_GAIN_SPECTROGRAM, wf_new) end
+                if reaper.ImGui_IsItemDeactivatedAfterEdit(ctx) then SaveAllSettings() end
+                if reaper.ImGui_IsItemHovered(ctx) then shared_info.hovered_id = "GAIN_SPECTROGRAM" end
 
                 local force_save = false
                
